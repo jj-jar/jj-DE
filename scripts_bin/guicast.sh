@@ -8,6 +8,25 @@ menu_picker() {
   printf "%s\n" "$@" | fzf --prompt="$prompt_msg" --height=40% --reverse --border
 }
 
+select_audio_device() {
+  clear
+  echo "========================================"
+  echo " 🔊 [ ALSA HARDWARE AUDIO TARGETS ]     "
+  echo "========================================"
+  echo "1) 🔊 Desktop Speakers (ALC897 Analog Line-Out)"
+  echo "2) 📺 Sharp TV (NVIDIA HDMI 1 Output Node)"
+  echo "3) 🎧 Razer Headset (Kraken Ultimate USB Card)"
+  echo "========================================"
+  read -p "Select Sound Output Terminal (1-3): " AUDIO_CHOICE
+
+  case "$AUDIO_CHOICE" in
+    1) echo "alsa/plughw:CARD=Generic_1,DEV=0" ;;
+    2) echo "alsa/plughw:CARD=NVidia,DEV=7" ;;
+    3) echo "alsa/plughw:CARD=Ultimate,DEV=0" ;;
+    *) echo "alsa/plughw:CARD=Generic_1,DEV=0" ;; # Default safe fallback to speakers
+  esac
+}
+
 main_menu() {
   while true; do
     clear
@@ -56,13 +75,11 @@ handle_music_sector() {
   local chosen_album=""
   local chosen_track=""
 
-  # --- TIER 1: SELECT ALBUM / ARTIST FOLDER ---
   while true; do
     clear
     local albums=()
     while IFS= read -r d; do albums+=("$d"); done < <(find . -maxdepth 1 -type d -not -path . | sed 's|^\./||' | sort)
     
-    # Fallback to direct flat tracks if no album directories exist
     if [ ${#albums[@]} -eq 0 ]; then
       chosen_album=""
       break
@@ -76,7 +93,6 @@ handle_music_sector() {
     break
   done
 
-  # --- TIER 2: SELECT FLAC / MP3 TRACK ---
   while true; do
     clear
     if [ -z "$chosen_album" ]; then
@@ -103,8 +119,7 @@ handle_music_sector() {
     break
   done
 
-  # Finalize physical target data string path links
-  if [ -z "$chosen_album" ]; then
+  if [ -z "$chosen_album" ] ; then
     launch_mpv_audio "$music_dir/$chosen_track"
   else
     launch_mpv_audio "$music_dir/$chosen_album/$chosen_track"
@@ -119,7 +134,6 @@ handle_tv_sector() {
   local chosen_season=""
   local chosen_episode=""
 
-  # --- TIER 1: SELECT SHOW ---
   while true; do
     clear
     local shows=()
@@ -138,7 +152,6 @@ handle_tv_sector() {
     break
   done
 
-  # --- TIER 2: SELECT SEASON ---
   while true; do
     clear
     cd "$tv_dir/$chosen_show" 2>/dev/null || { main_menu; return; }
@@ -159,7 +172,6 @@ handle_tv_sector() {
     break
   done
 
-  # --- TIER 3: SELECT EPISODE ---
   while true; do
     clear
     if [ -z "$chosen_season" ]; then
@@ -197,8 +209,10 @@ handle_tv_sector() {
 
 launch_mpv_video() {
   local file_path="$1"
+  local target_audio=$(select_audio_device)
   killall -9 mpv 2>/dev/null; pkill -9 -f mpv 2>/dev/null
   /usr/bin/mpv \
+    --audio-device="$target_audio" \
     --hwdec=nvdec \
     --vo=gpu \
     --gpu-context=wayland \
@@ -215,9 +229,10 @@ launch_mpv_video() {
 
 launch_mpv_audio() {
   local file_path="$1"
+  local target_audio=$(select_audio_device)
   killall -9 mpv 2>/dev/null; pkill -9 -f mpv 2>/dev/null
-  # Forces mpv to render embedded cover art textures within a centered floating window box frame
   /usr/bin/mpv \
+    --audio-device="$target_audio" \
     --vo=gpu \
     --gpu-context=wayland \
     --force-window=yes \
