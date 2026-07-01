@@ -1,0 +1,39 @@
+{
+    "layer": "top",
+    "position": "bottom",
+    "height": 32,
+    "spacing": 12,
+    "modules-left": ["custom/movies", "custom/tvshows", "custom/music"],
+    "modules-center": ["clock"],
+    "modules-right": ["pulseaudio"],
+
+    "custom/movies": {
+        "format": "[ MOVIES ]",
+        "tooltip": false,
+        "on-click": "foot --title='JAKES_MEDIA_PICKER' --window-size-chars=80x24 bash -c 'echo 1 | /usr/local/bin/guicast'"
+    },
+
+    "custom/tvshows": {
+        "format": "[ TV SHOWS ]",
+        "tooltip": false,
+        "on-click": "foot --title='JAKES_MEDIA_PICKER' --window-size-chars=80x24 bash -c 'echo 3 | /usr/local/bin/guicast'"
+    },
+
+    "custom/music": {
+        "format": "[ MUSIC ]",
+        "tooltip": false,
+        "on-click": "foot --title='JAKES_MEDIA_PICKER' --window-size-chars=80x24 bash -c 'echo 2 | /usr/local/bin/guicast'"
+    },
+
+    "clock": {
+        "format": "{:%I:%M %p}",
+        "tooltip": false
+    },
+
+    "pulseaudio": {
+        "format": "VOL {volume}%",
+        "format-muted": "MUTED",
+        "tooltip": false,
+        "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+    }
+}
